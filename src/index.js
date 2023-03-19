@@ -1,12 +1,24 @@
 let model
 let videoWidth, videoHeight
 let ctx, canvas
-const log = document.querySelector("#array")
+const k = 3
+const machine = new kNear(k)
+const predictionsDiv = document.querySelector("#predictions")
+const okhand = document.querySelector("#okHand")
+const fisthand = document.querySelector("#boxHand")
+const flathand = document.querySelector("#flatHand")
+const classify = document.querySelector("#classify")
 const VIDEO_WIDTH = 720
 const VIDEO_HEIGHT = 405
 
+// Eventlisteners
+okhand.addEventListener("click", () => capturePose(okhand.value))
+fisthand.addEventListener("click", () => capturePose(fisthand.value))
+flathand.addEventListener("click", () => capturePose(flathand.value))
+classify.addEventListener("click", () => predictPose())
+
 //
-// start de applicatie
+// Start de applicatie
 //
 async function main() {
     model = await handpose.load()
@@ -16,7 +28,7 @@ async function main() {
 }
 
 //
-// start de webcam
+// Start de webcam
 //
 async function setupCamera() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -92,7 +104,7 @@ async function predictLandmarks() {
 //
 function drawHand(ctx, keypoints, annotations) {
     // toon alle x,y,z punten van de hele hand in het log venster
-    log.innerText = keypoints.flat()
+    // log.innerText = keypoints.flat()
 
     // punten op alle kootjes kan je rechtstreeks uit keypoints halen
     for (let i = 0; i < keypoints.length; i++) {
@@ -135,7 +147,61 @@ function drawPath(ctx, points, closePath) {
     ctx.stroke(region)
 }
 
+function learnPose(allPoints, learnLabel) {
+    machine.learn(allPoints, learnLabel.toString())
+}
+
+async function capturePose(label){
+    const learnLabel = label
+    const predictions = await model.estimateHands(video) // ,true voor flip
+    if (predictions.length > 0) {
+        // voorbeeld: bekijk x, y, z van het eerste botje van je pink:
+        let [y, x, z] = predictions[0].annotations.pinky[0]
+
+
+        // voorbeeld: alle landmarks x,y,z in een array plaatsen
+        let allPoints = []
+        for (let i = 0; i < 20; i++) {
+            allPoints.push(predictions[0].landmarks[i][0])
+            allPoints.push(predictions[0].landmarks[i][1])
+            allPoints.push(predictions[0].landmarks[i][2])
+        }
+        learnPose(allPoints, learnLabel)
+    }
+}
+
+async function predictPose(){
+    const predictions = await model.estimateHands(video) // ,true voor flip
+    if (predictions.length > 0) {
+        // voorbeeld: bekijk x, y, z van het eerste botje van je pink:
+        let [y, x, z] = predictions[0].annotations.pinky[0]
+
+
+        // voorbeeld: alle landmarks x,y,z in een array plaatsen
+        let allPoints = []
+        for (let i = 0; i < 20; i++) {
+            allPoints.push(predictions[0].landmarks[i][0])
+            allPoints.push(predictions[0].landmarks[i][1])
+            allPoints.push(predictions[0].landmarks[i][2])
+        }
+        let prediction = machine.classify(allPoints)
+        console.log(`I think it's a ${prediction}`)
+        predictionsDiv.innerHTML = "Je maakt een " + prediction + " gebaar"
+    } else {
+        predictionsDiv.innerHTML = "Ik kan geen hand vinden of er is nog niks getrained"
+    }
+}
+
 //
 // start
 //
 main()
+
+
+
+
+
+
+
+
+

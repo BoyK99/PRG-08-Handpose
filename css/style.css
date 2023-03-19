@@ -22,6 +22,15 @@ body {
     word-wrap: break-word;
 }
 
+#predict {
+    background-color: rgb(32, 59, 65);
+    color: white;
+    font-family: monospace;
+    min-height: 20px;
+    width: 720px;
+    word-wrap: break-word;
+}
+
 video {
     -webkit-transform: scaleX(-1);
     transform: scaleX(-1);
